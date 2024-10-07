@@ -1,0 +1,46 @@
+version: '3.5'
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: itgro-nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - "8140:80"
+    networks:
+      - itgro-network
+
+  app:
+    image: php:8.3
+    restart: unless-stopped
+    container_name: itgro-app
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+      args:
+        - SITE_URL=itgro-nginx
+    networks:
+      - itgro-network
+
+  db:
+    image: mysql
+    volumes:
+      - ./mysql:/var/lib/mysql
+    container_name: itgro-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3303:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: pwd
+    networks:
+      - itgro-network
+
+networks:
+  itgro-network:
+    driver: bridge
+    name: itgro-network
